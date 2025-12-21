@@ -4,7 +4,6 @@ import { Server } from "socket.io";
 
 const app = express();
 
-// health check (IMPORTANT for Render)
 app.get("/", (req, res) => {
   res.send("OK");
 });
@@ -13,7 +12,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "https://video-share-brown.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -36,7 +37,6 @@ io.on("connection", socket => {
 });
 
 const PORT = process.env.PORT || 10000;
-
 server.listen(PORT, "0.0.0.0", () => {
   console.log("Server listening on port", PORT);
 });
