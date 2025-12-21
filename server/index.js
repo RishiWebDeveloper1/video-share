@@ -1,20 +1,15 @@
-import fs from "fs";
-import https from "https";
 import express from "express";
+import http from "http";
 import { Server } from "socket.io";
 
 const app = express();
+const server = http.createServer(app);
 
-const httpsServer = https.createServer(
-  {
-    key: fs.readFileSync("./cert/key.pem"),
-    cert: fs.readFileSync("./cert/cert.pem")
-  },
-  app
-);
-
-const io = new Server(httpsServer, {
-  cors: { origin: "*" }
+const io = new Server(server, {
+  cors: {
+    origin: "https://video-share-brown.vercel.app",
+    methods: ["GET", "POST"]
+  }
 });
 
 io.on("connection", socket => {
@@ -30,13 +25,20 @@ io.on("connection", socket => {
     socket.to(roomId).emit("peer-joined");
   });
 
-
   socket.on("signal", ({ roomId, data }) => {
     socket.to(roomId).emit("signal", data);
   });
+
+  socket.on("disconnecting", () => {
+    for (const roomId of socket.rooms) {
+      if (roomId !== socket.id) {
+        socket.to(roomId).emit("peer-left");
+      }
+    }
+  });
 });
 
-
-httpsServer.listen(5000, "0.0.0.0", () => {
-  console.log("HTTPS signaling server running on 5000");
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, "0.0.0.0", () => {
+  console.log("Socket.IO server running on port", PORT);
 });
