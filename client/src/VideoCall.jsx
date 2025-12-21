@@ -254,9 +254,18 @@ export default function VideoCall({ roomId }) {
             }
 
             if (data.answer) {
-                log("Handling answer");
+                if (!pc.current) return;
+
+                // 🔒 CRITICAL STATE CHECK
+                if (pc.current.signalingState !== "have-local-offer") {
+                    console.warn(
+                        "[VideoCall] Ignoring answer in state:",
+                        pc.current.signalingState
+                    );
+                    return;
+                }
+
                 await pc.current.setRemoteDescription(data.answer);
-                flushCandidates();
                 setStatus("Connected");
             }
 
@@ -354,6 +363,8 @@ export default function VideoCall({ roomId }) {
         setKey(k => k + 1);
     };
 
+    console.log("SDP action", pc.current.signalingState, data
+    );
 
 
     /* ================= UI ================= */
