@@ -363,10 +363,6 @@ export default function VideoCall({ roomId }) {
         setKey(k => k + 1);
     };
 
-    console.log("SDP action", pc.current.signalingState, data
-    );
-
-
     /* ================= UI ================= */
     return (
         <div className="video-call">
