@@ -43,7 +43,7 @@ export default function VideoCall({ roomId }) {
         }
 
         log("Connecting socket...");
-        socket.current = io("https://192.168.7.10:5000", {
+        socket.current = io("https://video-share-bg1r.onrender.com", {
             transports: ["polling"]
         });
 
