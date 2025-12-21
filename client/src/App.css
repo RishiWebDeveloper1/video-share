@@ -1,0 +1,357 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App background */
+body {
+  background: #0b141a;
+  /* WhatsApp dark */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  overflow: hidden;
+}
+
+/* Video container */
+.video-call {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+}
+
+/* Remote (main) video */
+.video-other {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: black;
+}
+
+/* Self (PiP) video */
+.video-self {
+  position: absolute;
+  bottom: 90px;
+  right: 16px;
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  background: black;
+  z-index: 10;
+}
+
+/* Controls bar */
+.call-controls {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  z-index: 20;
+}
+
+/* Control buttons */
+.call-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(30, 30, 30, 0.8);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.call-btn:hover {
+  transform: scale(1.1);
+  background: rgba(50, 50, 50, 0.9);
+}
+
+/* End call button */
+.call-btn.end {
+  background: #e53935;
+}
+
+.call-btn.end:hover {
+  background: #d32f2f;
+}
+
+.call-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.video-self {
+  transform: scaleX(-1);
+}
+
+.video-self.screen {
+  transform: none;
+}
+
+.video-other {
+  transform: none;
+}
+
+/* Desktop improvements */
+@media (min-width: 768px) {
+  .video-self {
+    width: 160px;
+    height: 220px;
+    bottom: 120px;
+  }
+}
+
+
+
+
+
+
+
+
+
+.message-container {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.542);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-body {
+  width: 500px;
+  height: 300px;
+  color: black;
+  background-color: white;
+  border-radius: 12px;
+  animation: pop-in 0.3s ease-out forwards;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-logo-box {
+  width: 90px;
+  height: 90px;
+}
+
+/* ************* check ************* */
+
+.message-circle {
+  width: 100px;
+  height: 100px;
+  border: 6px solid rgba(166, 255, 33, 0.559);
+  border-radius: 100px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  position: relative;
+}
+
+.message-small-line {
+  width: 7px;
+  height: 35px;
+  background-color: rgba(166, 255, 33, 0.75);
+  border-radius: 4px;
+  rotate: -45deg;
+  position: absolute;
+  bottom: 10px;
+  left: 20px;
+  animation-name: checkAnimateSmall;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease;
+}
+
+.message-big-line {
+  width: 7px;
+  height: 60px;
+  background-color: rgba(166, 255, 33, 0.76);
+  border-radius: 4px;
+  rotate: 45deg;
+  position: absolute;
+  bottom: 10px;
+  left: 52px;
+  animation-name: checkAnimateBig;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease;
+}
+
+@keyframes checkAnimateSmall {
+  0% {
+    height: 10px;
+    bottom: 18px;
+    left: 34px;
+  }
+
+  100% {
+    height: 35px;
+  }
+}
+
+@keyframes checkAnimateBig {
+  0% {
+    height: 10px;
+    bottom: 18px;
+    left: 34px;
+  }
+
+  100% {
+    height: 60px;
+  }
+}
+
+.message-circle-wrong {
+  width: 100px;
+  height: 100px;
+  border: 6px solid rgba(255, 33, 33, 0.559);
+  border-radius: 100px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  position: relative;
+}
+
+.message-1-line {
+  width: 7px;
+  height: 60px;
+  background-color: rgba(255, 33, 33, 0.75);
+  border-radius: 4px;
+  rotate: -45deg;
+  position: absolute;
+  animation-name: crossAnimation;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease;
+}
+
+.message-2-line {
+  width: 7px;
+  height: 60px;
+  background-color: rgba(255, 33, 33, 0.76);
+  border-radius: 4px;
+  rotate: 45deg;
+  position: absolute;
+  animation-name: crossAnimation;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease;
+}
+
+@keyframes crossAnimation {
+  0% {
+    height: 35px;
+  }
+
+  100% {
+    height: 60px;
+  }
+}
+
+.message-circle-warn {
+  width: 100px;
+  height: 100px;
+  border: 6px solid rgba(255, 153, 0, 0.56);
+  border-radius: 100px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  position: relative;
+}
+
+.message-main-line {
+  width: 7px;
+  height: 45px;
+  background-color: rgba(255, 153, 0, 0.75);
+  border-radius: 4px;
+  rotate: 180deg;
+  position: absolute;
+  top: 15px;
+  animation-name: warnAnimation;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease;
+}
+
+.message-dot {
+  width: 7px;
+  height: 7px;
+  background-color: rgba(255, 153, 0, 0.75);
+  border-radius: 4px;
+  position: absolute;
+  bottom: 15px;
+}
+
+@keyframes warnAnimation {
+  0% {
+    height: 20px;
+  }
+
+  100% {
+    height: 45px;
+  }
+}
+
+.message-text-box {
+  width: 100%;
+  height: 60px;
+  font-size: 30px;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-detail-box {
+  width: 100%;
+  height: 60px;
+  font-size: 18x;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-ok-button {
+  width: 60px;
+  height: 45px;
+  color: white;
+  background-color: blueviolet;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  80% {
+    transform: scale(1.1);
+    /* Slightly larger than final size for a "pop" effect */
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
