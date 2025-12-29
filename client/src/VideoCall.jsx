@@ -18,6 +18,7 @@ export default function VideoCall({ roomId }) {
     const [status, setStatus] = useState("Initializing...");
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const currentFacingMode = useRef("user"); // "user" | "environment"
 
     /* ================= LOG HELPERS ================= */
     const log = (...args) => console.log("[VideoCall]", ...args);
@@ -33,7 +34,6 @@ export default function VideoCall({ roomId }) {
             createPeer(cameraStream.current);
         }
     };
-
 
     /* ================= INIT ================= */
     useEffect(() => {
@@ -137,9 +137,8 @@ export default function VideoCall({ roomId }) {
     /* ================= CAMERA ================= */
     const startCamera = async () => {
         try {
-            log("Starting camera");
             cameraStream.current = await navigator.mediaDevices.getUserMedia({
-                video: true,
+                video: { facingMode: currentFacingMode.current },
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
@@ -149,13 +148,49 @@ export default function VideoCall({ roomId }) {
 
             localVideo.current.srcObject = cameraStream.current;
             createPeer(cameraStream.current);
-
             setStatus("Waiting for peer...");
         } catch (err) {
             error("Camera error", err);
-            alert("Camera permission denied");
         }
     };
+
+    const toggleCamera = async () => {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+            if (videoDevices.length < 2) {
+                log("Only one camera found — no toggle");
+                return;
+            }
+
+            currentFacingMode.current =
+                currentFacingMode.current === "user"
+                    ? "environment"
+                    : "user";
+
+            log("Switching camera to:", currentFacingMode.current);
+
+            cameraStream.current?.getTracks().forEach(t => t.stop());
+
+            cameraStream.current = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: currentFacingMode.current },
+                audio: true
+            });
+
+            localVideo.current.srcObject = cameraStream.current;
+
+            const videoTrack = cameraStream.current.getVideoTracks()[0];
+            const sender = pc.current
+                ?.getSenders()
+                .find(s => s.track?.kind === "video");
+
+            sender?.replaceTrack(videoTrack);
+        } catch (err) {
+            error("Camera toggle failed", err);
+        }
+    };
+
 
     /* ================= SCREEN SHARE ================= */
     const toggleScreenShare = async () => {
@@ -207,6 +242,15 @@ export default function VideoCall({ roomId }) {
 
         sender.replaceTrack(newTrack);
     };
+
+    /* ================= Mute ================= */
+    const toggleMic = () => {
+        if (!cameraStream.current) return;
+        const audioTrack = cameraStream.current.getAudioTracks()[0];
+        if (!audioTrack) return;
+        audioTrack.enabled = !isMicMuted.current;
+    };
+
 
     /* ================= SIGNALING ================= */
     const safeCreateOffer = async () => {
@@ -357,12 +401,6 @@ export default function VideoCall({ roomId }) {
         showMessage()
     }, [status])
 
-    const [key, setKey] = useState(0);
-
-    const softReload = () => {
-        setKey(k => k + 1);
-    };
-
     /* ================= UI ================= */
     return (
         <div className="video-call">
@@ -371,10 +409,10 @@ export default function VideoCall({ roomId }) {
 
             <div className="call-controls">
                 <button className="call-btn" onClick={toggleFullscreen}>{isFullscreen ? "🗗" : "🗖"}</button>
-                <button className="call-btn" onClick={() => { setStatus("s") }}>🎤</button>
-                <button className="call-btn">📷</button>
+                <button className="call-btn" onClick={toggleMic}>🎤</button>
+                <button className="call-btn" onClick={toggleCamera}>📷</button>
                 <button className="call-btn" onClick={toggleScreenShare}>{isScreenSharing ? "🛑" : "🖥️"}</button>
-                <button className="call-btn end" onClick={softReload}>📞</button>
+                <button className="call-btn end">📞</button>
             </div>
         </div>
     );
