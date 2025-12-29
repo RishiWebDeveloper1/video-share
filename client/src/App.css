@@ -16,8 +16,8 @@ body {
 /* Video container */
 .video-call {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   background: black;
 }
 
