@@ -1,7 +1,9 @@
+import dotenv from "dotenv";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 
+dotenv.config()
 const app = express();
 
 app.get("/", (req, res) => {
@@ -12,7 +14,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://video-share-brown.vercel.app",
+    origin: `${process.env.BASE_URL}`,
     methods: ["GET", "POST"],
     credentials: true
   }

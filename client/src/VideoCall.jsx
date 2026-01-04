@@ -43,7 +43,7 @@ export default function VideoCall({ roomId }) {
         }
 
         log("Connecting socket...");
-        socket.current = io("https://video-share-bg1r.onrender.com", {
+        socket.current = io(`${import.meta.env.VITE_BASE_URL}`, {
             transports: ["polling"],
             withCredentials: true
         });
