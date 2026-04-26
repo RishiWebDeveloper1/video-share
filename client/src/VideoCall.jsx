@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { Fullscreen, Mic, MonitorUp, Phone, Shrink, SwitchCamera } from 'lucide-react';
 
 export default function VideoCall({ roomId }) {
     /* ================= REFS ================= */
@@ -408,11 +409,11 @@ export default function VideoCall({ roomId }) {
             <video className="video-other" ref={remoteVideo} autoPlay playsInline />
 
             <div className="call-controls">
-                <button className="call-btn" onClick={toggleFullscreen}>{isFullscreen ? "🗗" : "🗖"}</button>
-                <button className="call-btn" onClick={toggleMic}>🎤</button>
-                <button className="call-btn" onClick={toggleCamera}>📷</button>
-                <button className="call-btn" onClick={toggleScreenShare}>{isScreenSharing ? "🛑" : "🖥️"}</button>
-                <button className="call-btn end">📞</button>
+                <button className="call-btn" onClick={toggleFullscreen}>{isFullscreen ? <Shrink /> : <Fullscreen />}</button>
+                <button className="call-btn" onClick={toggleMic}><Mic /></button>
+                <button className="call-btn mobile-btn" onClick={toggleCamera}><SwitchCamera /></button>
+                <button className="call-btn desktop-btn" onClick={toggleScreenShare}>{isScreenSharing ? "🛑" : <MonitorUp />}</button>
+                <button className="call-btn end" onClick={() => window.close()}><Phone /></button>
             </div>
         </div>
     );

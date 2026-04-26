@@ -68,6 +68,9 @@ body {
   cursor: pointer;
   backdrop-filter: blur(10px);
   transition: transform 0.15s ease, background 0.15s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .call-btn:hover {
@@ -101,6 +104,14 @@ body {
   transform: none;
 }
 
+.mobile-btn {
+  display: flex;
+}
+
+.desktop-btn {
+  display: none;
+}
+
 /* Desktop improvements */
 @media (min-width: 768px) {
   .video-self {
@@ -108,15 +119,15 @@ body {
     height: 220px;
     bottom: 120px;
   }
+
+  .mobile-btn {
+    display: none;
+  }
+
+  .desktop-btn {
+    display: flex;
+  }
 }
-
-
-
-
-
-
-
-
 
 .message-container {
   width: 100%;
