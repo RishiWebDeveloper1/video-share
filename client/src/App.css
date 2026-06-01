@@ -366,3 +366,122 @@ body {
     opacity: 1;
   }
 }
+
+.audio-call {
+  position: relative;
+  width: 100dvw;
+  height: 100dvh;
+  background: rgb(0, 7, 42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.call-top-status {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 30;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.107);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.573);
+  font-size: 12px;
+  line-height: 1.45;
+  min-width: 170px;
+}
+
+.circle-user-box {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  background-color: aqua;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.circle-user {
+  position: relative;
+  z-index: 10;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.35);
+  animation: ripple 4s linear infinite;
+}
+
+.r1 {
+  animation-delay: 0s;
+}
+
+.r2 {
+  animation-delay: 1s;
+}
+
+.r3 {
+  animation-delay: 2s;
+}
+
+.r4 {
+  animation-delay: 3s;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Home page styles (simple, human-friendly) */
+.home-container {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.home-card {
+  width: min(520px, 96vw);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 28px;
+  border-radius: 14px;
+  text-align: left;
+  color: #eaf6ff;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+
+.home-card h2 { margin-bottom: 6px }
+.muted { color: rgba(234,246,255,0.6); font-size: 0.95rem }
+.label { display:block; margin-top:12px; font-size:0.9rem; color:rgba(234,246,255,0.85) }
+.room-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(10, 18, 24, 0.4);
+  color: #fff;
+}
+
+.home-actions { display:flex; gap:10px; margin-top:16px }
+.btn { padding: 10px 14px; border-radius:8px; border:none; cursor:pointer }
+.btn-primary { background: linear-gradient(90deg,#4ade80,#38bdf8); color:#06201f }
+.btn-secondary { background: rgba(255,255,255,0.06); color:#eaf6ff }
+.hint { margin-top:14px; font-size:0.9rem; color:rgba(234,246,255,0.65) }

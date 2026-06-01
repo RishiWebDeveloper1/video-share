@@ -1,8 +1,20 @@
 import './App.css'
-import VideoCall from "./VideoCall";
+import { BrowserRouter, Route, Routes } from "react-router-dom"
+import Call from './pages/Call';
+import Home from './pages/Home';
 
 function App() {
-  return <VideoCall roomId="local-room-1" />;
+
+  return (
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route index element={<Home />} />
+          <Route path="call/:type/:roomId" element={<Call />} />
+        </Routes>
+      </BrowserRouter>
+    </>
+  )
 }
 
 export default App;

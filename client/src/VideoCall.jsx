@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import { Fullscreen, Mic, MonitorUp, Phone, Shrink, SwitchCamera } from 'lucide-react';
+import { Fullscreen, Mic, MicOff, MonitorUp, Phone, Shrink, SwitchCamera } from 'lucide-react';
 
 export default function VideoCall({ roomId }) {
     /* ================= REFS ================= */
@@ -14,16 +14,81 @@ export default function VideoCall({ roomId }) {
     const cameraStream = useRef(null);
     const screenStream = useRef(null);
     const pendingCandidates = useRef([]);
+    const pendingSignals = useRef([]);
+    const callStartTime = useRef(null);
 
     /* ================= STATE ================= */
     const [status, setStatus] = useState("Initializing...");
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isMicMuted, setIsMicMuted] = useState(false);
+    const [connectCountdown, setConnectCountdown] = useState(0);
+    const [callDurationSec, setCallDurationSec] = useState(0);
     const currentFacingMode = useRef("user"); // "user" | "environment"
 
     /* ================= LOG HELPERS ================= */
     const log = (...args) => console.log("[VideoCall]", ...args);
     const error = (...args) => console.error("[VideoCall ERROR]", ...args);
+    const peerName = "Guest";
+    const isConnected = status === "Connected";
+
+    const formatDuration = totalSec => {
+        const minutes = Math.floor(totalSec / 60)
+            .toString()
+            .padStart(2, "0");
+        const seconds = Math.floor(totalSec % 60)
+            .toString()
+            .padStart(2, "0");
+        return `${minutes}:${seconds}`;
+    };
+
+    useEffect(() => {
+        if (isConnected || status === "Room is full" || status.includes("failed")) {
+            setConnectCountdown(0);
+            return;
+        }
+
+        if (status === "Initializing...") {
+            setConnectCountdown(3);
+        }
+
+        if (!cameraStream.current) {
+            setConnectCountdown(0);
+            return;
+        }
+
+        const timer = setInterval(() => {
+            setConnectCountdown(current => {
+                if (current <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+
+                return current - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isConnected, status]);
+
+    useEffect(() => {
+        if (!isConnected) {
+            callStartTime.current = null;
+            setCallDurationSec(0);
+            return;
+        }
+
+        if (!callStartTime.current) {
+            callStartTime.current = Date.now();
+        }
+
+        const timer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - callStartTime.current) / 1000);
+            setCallDurationSec(elapsed);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isConnected]);
 
     // ====================================
     const resetAndRecreatePeer = () => {
@@ -33,6 +98,7 @@ export default function VideoCall({ roomId }) {
 
         if (cameraStream.current) {
             createPeer(cameraStream.current);
+            flushPendingSignals();
         }
     };
 
@@ -45,7 +111,7 @@ export default function VideoCall({ roomId }) {
 
         log("Connecting socket...");
         socket.current = io(`${import.meta.env.VITE_BASE_URL}`, {
-            transports: ["polling"],
+            transports: ["websocket", "polling"],
             withCredentials: true
         });
 
@@ -135,6 +201,59 @@ export default function VideoCall({ roomId }) {
         pendingCandidates.current = [];
     };
 
+    const applySignal = async data => {
+        if (data.offer) {
+            log("Handling offer");
+            await pc.current.setRemoteDescription(data.offer);
+            flushCandidates();
+
+            const answer = await pc.current.createAnswer();
+            await pc.current.setLocalDescription(answer);
+
+            socket.current.emit("signal", {
+                roomId,
+                data: { answer }
+            });
+
+            setStatus("Connected");
+        }
+
+        if (data.answer) {
+            if (!pc.current) return;
+
+            if (pc.current.signalingState !== "have-local-offer") {
+                console.warn(
+                    "[VideoCall] Ignoring answer in state:",
+                    pc.current.signalingState
+                );
+                return;
+            }
+
+            await pc.current.setRemoteDescription(data.answer);
+            setStatus("Connected");
+        }
+
+        if (data.candidate) {
+            if (pc.current.remoteDescription) {
+                await pc.current.addIceCandidate(data.candidate);
+            } else {
+                log("Queueing ICE candidate");
+                pendingCandidates.current.push(data.candidate);
+            }
+        }
+    };
+
+    const flushPendingSignals = async () => {
+        if (!pc.current || pendingSignals.current.length === 0) return;
+
+        const queuedSignals = [...pendingSignals.current];
+        pendingSignals.current = [];
+
+        for (const signal of queuedSignals) {
+            await applySignal(signal);
+        }
+    };
+
     /* ================= CAMERA ================= */
     const startCamera = async () => {
         try {
@@ -147,9 +266,15 @@ export default function VideoCall({ roomId }) {
                 }
             });
 
+            const audioTrack = cameraStream.current.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !isMicMuted;
+            }
+
             localVideo.current.srcObject = cameraStream.current;
             createPeer(cameraStream.current);
             setStatus("Waiting for peer...");
+            flushPendingSignals();
         } catch (err) {
             error("Camera error", err);
         }
@@ -178,6 +303,11 @@ export default function VideoCall({ roomId }) {
                 video: { facingMode: currentFacingMode.current },
                 audio: true
             });
+
+            const audioTrack = cameraStream.current.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !isMicMuted;
+            }
 
             localVideo.current.srcObject = cameraStream.current;
 
@@ -246,10 +376,11 @@ export default function VideoCall({ roomId }) {
 
     /* ================= Mute ================= */
     const toggleMic = () => {
-        if (!cameraStream.current) return;
-        const audioTrack = cameraStream.current.getAudioTracks()[0];
+        const audioTrack = cameraStream.current?.getAudioTracks()[0];
         if (!audioTrack) return;
-        audioTrack.enabled = !isMicMuted.current;
+
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMicMuted(!audioTrack.enabled);
     };
 
 
@@ -278,50 +409,11 @@ export default function VideoCall({ roomId }) {
     const handleSignal = async data => {
         try {
             if (!pc.current) {
-                log("PC not ready → ignoring signal");
+                pendingSignals.current.push(data);
                 return;
             }
 
-            if (data.offer) {
-                log("Handling offer");
-                await pc.current.setRemoteDescription(data.offer);
-                flushCandidates();
-
-                const answer = await pc.current.createAnswer();
-                await pc.current.setLocalDescription(answer);
-
-                socket.current.emit("signal", {
-                    roomId,
-                    data: { answer }
-                });
-
-                setStatus("Connected");
-            }
-
-            if (data.answer) {
-                if (!pc.current) return;
-
-                // 🔒 CRITICAL STATE CHECK
-                if (pc.current.signalingState !== "have-local-offer") {
-                    console.warn(
-                        "[VideoCall] Ignoring answer in state:",
-                        pc.current.signalingState
-                    );
-                    return;
-                }
-
-                await pc.current.setRemoteDescription(data.answer);
-                setStatus("Connected");
-            }
-
-            if (data.candidate) {
-                if (pc.current.remoteDescription) {
-                    await pc.current.addIceCandidate(data.candidate);
-                } else {
-                    log("Queueing ICE candidate");
-                    pendingCandidates.current.push(data.candidate);
-                }
-            }
+            await applySignal(data);
         } catch (err) {
             error("Signal handling failed", err, data);
         }
@@ -405,12 +497,17 @@ export default function VideoCall({ roomId }) {
     /* ================= UI ================= */
     return (
         <div className="video-call">
+            <div className="call-top-status">
+                <div>{status === "Connected" ? "In Call" : status}</div>
+                <div>{`Other user: ${peerName}`}</div>
+                <div>{isConnected ? `Call • ${formatDuration(callDurationSec)}` : connectCountdown > 0 ? `Connecting • 00:0${connectCountdown}` : `Room ${roomId}`}</div>
+            </div>
             <video className={`video-self ${isScreenSharing ? "screen" : ""}`} ref={localVideo} autoPlay muted playsInline />
             <video className="video-other" ref={remoteVideo} autoPlay playsInline />
 
             <div className="call-controls">
                 <button className="call-btn" onClick={toggleFullscreen}>{isFullscreen ? <Shrink /> : <Fullscreen />}</button>
-                <button className="call-btn" onClick={toggleMic}><Mic /></button>
+                <button className="call-btn" onClick={toggleMic}>{isMicMuted ? <MicOff /> : <Mic />}</button>
                 <button className="call-btn mobile-btn" onClick={toggleCamera}><SwitchCamera /></button>
                 <button className="call-btn desktop-btn" onClick={toggleScreenShare}>{isScreenSharing ? "🛑" : <MonitorUp />}</button>
                 <button className="call-btn end" onClick={() => window.close()}><Phone /></button>

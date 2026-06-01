@@ -25,10 +25,17 @@ io.on("connection", socket => {
 
   socket.on("join-room", (roomId, cb) => {
     const room = io.sockets.adapter.rooms.get(roomId);
-    const initiator = !room || room.size === 0;
+    const participantCount = room?.size ?? 0;
+
+    if (participantCount >= 2) {
+      cb?.({ initiator: false, full: true });
+      return;
+    }
+
+    const initiator = participantCount === 0;
 
     socket.join(roomId);
-    cb?.({ initiator });
+    cb?.({ initiator, full: false });
 
     socket.to(roomId).emit("peer-joined");
   });
